@@ -6,7 +6,7 @@ use crate::parser::expr::Expr;
 pub enum Statement {
     ExpressionStmt(Expr),
     PrintStmt(Expr),
-    VarStmt(String, Option<Expr>), // name, optional initializer
+    VarStmt(Token, Option<Expr>), // name, optional initializer
     BlockStmt(Vec<Statement>),
     IfStmt(Expr, Box<Statement>, Option<Box<Statement>>),
     WhileStmt(Expr, Box<Statement>),

@@ -387,7 +387,7 @@ impl Parser {
         Ok(Statement::FunctionStmt(name, params, Rc::new(Box::new(body))))
     }
     fn var_declaration(&mut self) -> Result<Statement, ParseError> {
-        let name = self.expect(&TokenType::Identifier)?.lexeme.clone();
+        let name = self.expect(&TokenType::Identifier)?.clone();
         let initializer = if self.match_any(&[TokenType::Equal]) {
             Some(self.expression()?)
         } else {

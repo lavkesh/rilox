@@ -13,7 +13,7 @@ pub struct Interpreter {
     pub(crate) globals: EnvRef,
     pub(crate) env: EnvRef,
     pub(crate) had_error: bool,
-    pub(crate) locals: HashMap<*const Expr, usize>,
+    pub(crate) locals: HashMap<*const Expr, (usize,usize) >,
 }
 
 impl Interpreter {
@@ -36,7 +36,7 @@ impl Interpreter {
                 } else {
                     Value::Nil
                 };
-                self.env.borrow_mut().define(identifier.clone(), val);
+                self.env.borrow_mut().define(identifier.lexeme.clone(), val);
                 Ok(())
             }
 
@@ -201,10 +201,12 @@ impl Interpreter {
             Expr::Assignment { name, value } => {
                 let val = self.eval_expr(value);
                 let key = expr as *const Expr;
-                if let Some(&distance) = self.locals.get(&key) {
-                    Environment::assign_at(self.env.clone(), distance, name.lexeme.clone(), &val);
+
+                // Unpack both distance and index!
+                if let Some(&(distance, index)) = self.locals.get(&key) {
+                    Environment::assign_at(self.env.clone(), distance, index, val.clone());
                 } else {
-                    self.globals.borrow_mut().assign(name.lexeme.clone(), &val);
+                    self.globals.borrow_mut().assign(name.lexeme.clone(), val.clone());
                 }
                 val
             }
@@ -249,10 +251,12 @@ impl Interpreter {
         }
     }
 
+
     pub(crate) fn lookup(&self, name: &str, expr: &Expr) -> Value {
         let key = expr as *const Expr;
-        if let Some(&distance) = self.locals.get(&key) {
-            Environment::get_at(self.env.clone(), distance, name)
+        // Unpack both distance and index!
+        if let Some(&(distance, index)) = self.locals.get(&key) {
+            Environment::get_at(self.env.clone(), distance, index)
         } else {
             self.globals.borrow().get(name) // always fall back to globals
         }

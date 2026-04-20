@@ -9,16 +9,22 @@ pub type EnvRef = Rc<RefCell<Environment>>;
 pub struct Environment {
     map: HashMap<String, Value>,
     parent: Option<EnvRef>,
+    values: Vec<Value>,
 }
 impl Environment {
     pub fn new(parent: Option<Rc<RefCell<Environment>>>) -> Self {
         Environment {
             map: HashMap::<String, Value>::new(),
             parent,
+            values: Vec::new(),
         }
     }
     pub fn define(&mut self, name: String, value: Value) {
-        self.map.insert(name, value);
+        if self.parent.is_none() {
+            self.map.insert(name, value);
+        } else {
+            self.values.push(value); // it will match resolver index
+        }
     }
 
     pub fn get(&self, name: &str) -> Value {
@@ -31,7 +37,7 @@ impl Environment {
         Value::Nil
     }
 
-    pub fn assign(&mut self, name: String, value: &Value) -> bool {
+    pub fn assign(&mut self, name: String, value: Value) -> bool {
         if self.map.contains_key(&name) {
             self.map.insert(name, value.clone());
             return true;
@@ -41,9 +47,9 @@ impl Environment {
         }
         false
     }
+
     pub fn ancestor(env: EnvRef, distance: usize) -> EnvRef {
         let mut current = env;
-
         for _ in 0..distance {
             let parent = current
                 .borrow()
@@ -54,13 +60,15 @@ impl Environment {
         }
         current
     }
-    pub fn get_at(env: EnvRef, distance: usize, name: &str) -> Value {
-        let ancestor = Environment::ancestor(env, distance);
-        ancestor.borrow().map.get(name).cloned().unwrap_or(Value::Nil)
+    pub fn get_at(env: EnvRef, distance: usize, index: usize) -> Value {
+        let ancestor = Self::ancestor(env, distance);
+        ancestor.borrow().values[index].clone()
     }
 
-    pub fn assign_at(env: EnvRef, distance: usize, name: String, value: &Value) {
-        let ancestor = Environment::ancestor(env, distance);
-        ancestor.borrow_mut().map.insert(name, value.clone());
+
+    pub fn assign_at(env: EnvRef, distance: usize, index: usize, value: Value) {
+        let ancestor = Self::ancestor(env, distance);
+        ancestor.borrow_mut().values[index] = value;
     }
+
 }

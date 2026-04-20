@@ -1,0 +1,5 @@
+fun infinite() {
+    var x = 1;
+    infinite(); // Calls itself again!
+}
+infinite();
