@@ -1,0 +1,86 @@
+// --- 1. Basic Local Variable Resolution ---
+print "--- Test 1: Basic Locals ---";
+var a = "global a";
+{
+  var a = "local a";
+  var b = "local b";
+  print a; // Expected: local a
+  print b; // Expected: local b
+}
+print a;   // Expected: global a
+
+
+// --- 2. Variable Shadowing ---
+// This ensures that the resolver calculates the correct 'distance' 
+// and the environment ancestor method works.
+print "--- Test 2: Shadowing ---";
+var x = "global x";
+{
+  var x = "outer x";
+  {
+    var x = "inner x";
+    print x; // Expected: inner x
+  }
+  print x;   // Expected: outer x
+}
+print x;     // Expected: global x
+
+
+// --- 3. Closure Resolution ---
+// This is the most critical test. It ensures that the function 
+// remembers the 'distance' and 'index' of the variable where it was declared, 
+// not where it is called.
+print "--- Test 3: Closures ---";
+var f;
+{
+  var a = "closure a";
+  fun printA() {
+    print a;
+  }
+  f = printA;
+}
+var a = "wrong a";
+f(); // Expected: closure a
+
+
+// --- 4. Local Assignment ---
+// This tests that assign_at successfully mutates the Vec at the correct index.
+print "--- Test 4: Local Assignment ---";
+{
+  var c = "before";
+  print c; // Expected: before
+  c = "after";
+  print c; // Expected: after
+}
+
+
+// --- 5. Global Fallback in Local Scope ---
+// This tests that if the resolver doesn't assign an index (because it's global),
+// the interpreter successfully falls back to the HashMap.
+print "--- Test 5: Global Fallback ---";
+var globalVar = "I am global";
+{
+  var localVar = "I am local";
+  print localVar;  // Expected: I am local
+  print globalVar; // Expected: I am global
+  globalVar = "Mutated global";
+}
+print globalVar;   // Expected: Mutated global
+
+
+// --- 6. Return inside loops and blocks ---
+print "--- Test 6: Returns ---";
+fun count() {
+  var i = 0;
+  while (i < 3) {
+    print i;
+    i = i + 1;
+  }
+  return "done";
+}
+print count(); 
+// Expected: 0
+// Expected: 1
+// Expected: 2
+// Expected: done
+

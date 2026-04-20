@@ -1,5 +1,4 @@
 use crate::interpreter::function::LoxCallable;
-use std::fmt::Formatter;
 use std::rc::Rc;
 
 
@@ -21,8 +20,14 @@ pub fn is_truthy(val: &Value) -> bool {
     }
 }
 impl std::fmt::Display for Value {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::String(s) => write!(f, "{}", s),
+            Value::Number(n) => write!(f, "{}", n),
+            Value::Boolean(b) => write!(f, "{}", b),
+            Value::Nil => write!(f, "nil"),
+            Value::Callable(_) => write!(f, "<fn>"), // or whatever you want to display for functions
+        }
     }
 }
 

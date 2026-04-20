@@ -1,0 +1,95 @@
+print "=== 1. Recursion (Fibonacci) ===";
+fun fib(n) {
+  if (n <= 1) return n;
+  return fib(n - 2) + fib(n - 1);
+}
+print "Fibonacci of 8 (Expected: 21):";
+print fib(8);
+
+
+print "";
+print "=== 2. Closures & Mutable State ===";
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    return i;
+  }
+  return count;
+}
+
+var counter1 = makeCounter();
+var counter2 = makeCounter();
+
+print "Counter 1 (Expected: 1, 2):";
+print counter1();
+print counter1();
+print "Counter 2 (Expected: 1):";
+print counter2(); // Should maintain its own independent environment!
+
+
+print "";
+print "=== 3. Higher-Order Functions ===";
+fun applyTwice(f, x) {
+  return f(f(x));
+}
+
+fun square(n) {
+  return n * n;
+}
+
+print "Apply Twice Square to 3 (Expected: 81):";
+print applyTwice(square, 3);
+
+
+print "";
+print "=== 4. Lexical Scoping & Shadowing ===";
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA(); // Expected: global
+  var a = "block";
+  showA(); // Expected: global (Because the function was defined BEFORE 'a' was shadowed)
+}
+
+
+print "";
+print "=== 5. Control Flow (For Loops & Logic) ===";
+print "Even/Odd from 0 to 4:";
+
+for (var i = 0; i < 5; i = i + 1) {
+  // Lox doesn't have a modulo (%) operator, so we simulate it
+  var temp = i;
+  while (temp >= 2) {
+    temp = temp - 2;
+  }
+  
+  if (temp == 0) {
+    print "Even";
+  } else {
+    print "Odd";
+  }
+}
+
+
+print "";
+print "=== 6. Logical Operators (Short-Circuiting) ===";
+fun returnTrue() {
+  print "Called returnTrue";
+  return true;
+}
+
+fun returnFalse() {
+  print "Called returnFalse";
+  return false;
+}
+
+print "Testing OR (Should only call returnTrue):";
+var testOr = returnTrue() or returnFalse();
+
+print "Testing AND (Should call returnFalse and stop):";
+var testAnd = returnFalse() and returnTrue();
+
