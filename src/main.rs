@@ -67,6 +67,9 @@ pub fn interpret(source: String, interpreter: &mut Interpreter, resolver: &mut R
     for statement in &statements {
         resolver.resolve_statement(statement);
     }
+    if resolver.had_error {
+        return 65;
+    }
     interpreter.locals = resolver.locals.clone();
     for stmt in &statements {
         if interpreter.had_error {

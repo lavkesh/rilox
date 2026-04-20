@@ -4,15 +4,25 @@ use crate::parser::stmt::Statement;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+#[derive(Clone, Debug, PartialEq)]
+enum FunctionType {
+    NONE,
+    FUNCTION,
+}
+
 pub struct Resolver {
     scopes: Vec<HashMap<String, bool>>,
     pub locals: HashMap<*const Expr, usize>,
+    current_function: FunctionType,
+    pub had_error: bool,
 }
 impl Resolver {
     pub fn new() -> Self {
         Self {
             scopes: Vec::new(),
             locals: HashMap::new(),
+            current_function: FunctionType::NONE,
+            had_error: false,
         }
     }
     pub fn resolve_statement(&mut self, statement: &Statement) {
@@ -34,7 +44,7 @@ impl Resolver {
             Statement::FunctionStmt(identifier, params, body) => {
                 self.declare(identifier.lexeme.clone());
                 self.define(identifier.lexeme.clone());
-                self.resolve_function(params, body);
+                self.resolve_function(params, body, FunctionType::FUNCTION);
             }
             Statement::ExpressionStmt(expr) => {
                 self.resolve_expr(expr);
@@ -50,6 +60,11 @@ impl Resolver {
                 self.resolve_expr(expr);
             }
             Statement::ReturnStmt(_, expr) => {
+                if self.current_function == FunctionType::NONE{
+                    eprintln!("return used without function");
+                    self.had_error = true;
+                    return;
+                }
                 if let Some(e) = expr {
                     self.resolve_expr(e)
                 }
@@ -60,7 +75,9 @@ impl Resolver {
             }
         }
     }
-    fn resolve_function(&mut self, params: &Vec<Token>, body: &Rc<Box<Statement>>) {
+    fn resolve_function(&mut self, params: &Vec<Token>, body: &Rc<Box<Statement>>, function_type: FunctionType) {
+        let enclosing_function = self.current_function.clone();
+        self.current_function = function_type;
         self.begin_scope();
         for param in params {
             self.declare(param.lexeme.clone());
@@ -72,11 +89,17 @@ impl Resolver {
             }
         }
         self.end_scope();
+        self.current_function = enclosing_function;
     }
 
     fn declare(&mut self, name: String) {
         if !self.scopes.is_empty() {
             let scope: &mut HashMap<String, bool> = self.scopes.last_mut().unwrap();
+            if scope.contains_key(&name) {
+                eprintln!("Duplicate declaration: {}", name);
+                self.had_error = true;
+                return;
+            }
             scope.insert(name, false);
         }
     }
@@ -86,10 +109,10 @@ impl Resolver {
             scope.insert(name, true);
         }
     }
-    fn begin_scope(&mut self) {
+    pub fn begin_scope(&mut self) {
         self.scopes.push(HashMap::new())
     }
-    fn end_scope(&mut self) {
+    pub fn end_scope(&mut self) {
         self.scopes.pop();
     }
 
