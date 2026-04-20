@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use crate::lexer::token::{Token};
 use crate::parser::expr::Expr;
 
@@ -9,6 +10,6 @@ pub enum Statement {
     BlockStmt(Vec<Statement>),
     IfStmt(Expr, Box<Statement>, Option<Box<Statement>>),
     WhileStmt(Expr, Box<Statement>),
-    FunctionStmt(Token, Vec<Token>, Box<Statement>), //
+    FunctionStmt(Token, Vec<Token>, Rc<Box<Statement>>),
     ReturnStmt(Token, Option<Expr>),
 }

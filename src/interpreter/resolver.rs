@@ -2,6 +2,7 @@ use crate::lexer::token::Token;
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Statement;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct Resolver {
     scopes: Vec<HashMap<String, bool>>,
@@ -59,15 +60,20 @@ impl Resolver {
             }
         }
     }
-    fn resolve_function(&mut self, params: &Vec<Token>, body: &Box<Statement>) {
+    fn resolve_function(&mut self, params: &Vec<Token>, body: &Rc<Box<Statement>>) {
         self.begin_scope();
         for param in params {
             self.declare(param.lexeme.clone());
-            self.define(param.lexeme.clone())
+            self.define(param.lexeme.clone());
         }
-        self.resolve_statement(body);
+        if let Statement::BlockStmt(stmts) = body.as_ref().as_ref() {
+            for stmt in stmts {
+                self.resolve_statement(stmt);
+            }
+        }
         self.end_scope();
     }
+
     fn declare(&mut self, name: String) {
         if !self.scopes.is_empty() {
             let scope: &mut HashMap<String, bool> = self.scopes.last_mut().unwrap();

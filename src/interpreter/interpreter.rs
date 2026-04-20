@@ -10,9 +10,10 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Interpreter {
+    pub(crate) globals: EnvRef,
     pub(crate) env: EnvRef,
     pub(crate) had_error: bool,
-    pub(crate) locals: HashMap<*const Expr, usize>, // raw pointers.
+    pub(crate) locals: HashMap<*const Expr, usize>,
 }
 
 impl Interpreter {
@@ -62,18 +63,12 @@ impl Interpreter {
             }
 
             Statement::FunctionStmt(identifier, params, body) => {
-                let body_stmts = match body.as_ref() {
-                    Statement::BlockStmt(stmts) => stmts.clone(),
-                    _ => panic!("Function body must be a block"),
-                };
                 let func = LoxFunction {
                     params: params.clone(),
-                    body: body_stmts,
+                    body: body.clone(), // Rc clone — same pointers
                     closure: self.env.clone(),
                 };
-                self.env
-                    .borrow_mut()
-                    .define(identifier.lexeme.clone(), Value::Callable(Rc::new(func)));
+                self.env.borrow_mut().define(identifier.lexeme.clone(), Value::Callable(Rc::new(func)));
                 Ok(())
             }
 
@@ -96,8 +91,15 @@ impl Interpreter {
         let previous = self.env.clone();
         self.env = new_env;
         let result = stmts.iter().try_for_each(|s| self.execute_stmt(s));
-        self.env = previous; // always restore, even on error
+        self.env = previous;
         result
+    }
+    pub(crate) fn execute_stmt_block(&mut self, stmt: &Statement, new_env: EnvRef) -> Result<(), Error> {
+        if let Statement::BlockStmt(stmts) = stmt {
+            self.execute_block(stmts, new_env)
+        } else {
+            panic!("expected block");
+        }
     }
 
     pub fn eval_expr(&mut self, expr: &Expr) -> Value {
@@ -202,7 +204,7 @@ impl Interpreter {
                 if let Some(&distance) = self.locals.get(&key) {
                     Environment::assign_at(self.env.clone(), distance, name.lexeme.clone(), &val);
                 } else {
-                    self.env.borrow_mut().assign(name.lexeme.clone(), &val);
+                    self.globals.borrow_mut().assign(name.lexeme.clone(), &val);
                 }
                 val
             }
@@ -247,20 +249,23 @@ impl Interpreter {
         }
     }
 
-    pub(crate) fn lookup(&mut self, name: &str, expr: &Expr) -> Value {
+    pub(crate) fn lookup(&self, name: &str, expr: &Expr) -> Value {
         let key = expr as *const Expr;
-        let distance = self.locals.get(&key);
-        if let Some(distance) = distance {
-            return Environment::get_at(self.env.clone(), *distance, name);
+        if let Some(&distance) = self.locals.get(&key) {
+            Environment::get_at(self.env.clone(), distance, name)
+        } else {
+            self.globals.borrow().get(name) // always fall back to globals
         }
-        self.env.borrow().get(name)
     }
 
     pub fn new() -> Self {
-        let mut env = Environment::new(None);
-        env.define("clock".to_string(), Value::Callable(Rc::new(ClockFn)));
+        let globals = Rc::new(RefCell::new(Environment::new(None)));
+        globals
+            .borrow_mut()
+            .define("clock".to_string(), Value::Callable(Rc::new(ClockFn)));
         Self {
-            env: Rc::new(RefCell::new(env)),
+            env: globals.clone(),
+            globals,
             had_error: false,
             locals: HashMap::new(),
         }

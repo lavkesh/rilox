@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use crate::lexer::token::{Literal, Token, TokenType};
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Statement;
@@ -383,7 +384,7 @@ impl Parser {
         self.expect(&TokenType::RightParen)?;
         self.expect(&TokenType::LeftBrace)?;
         let body = self.block_statement()?;
-        Ok(Statement::FunctionStmt(name, params, Box::new(body)))
+        Ok(Statement::FunctionStmt(name, params, Rc::new(Box::new(body))))
     }
     fn var_declaration(&mut self) -> Result<Statement, ParseError> {
         let name = self.expect(&TokenType::Identifier)?.lexeme.clone();

@@ -37,7 +37,7 @@ impl LoxCallable for ClockFn {
 
 pub struct LoxFunction {
     pub(crate) params: Vec<Token>,
-    pub(crate) body: Vec<Statement>,
+    pub(crate) body: Rc<Box<Statement>>,  // shared, never cloned
     pub(crate) closure: EnvRef,
 }
 
@@ -57,7 +57,7 @@ impl LoxCallable for LoxFunction {
         for (param, arg) in self.params.iter().zip(args) {
             call_env.borrow_mut().define(param.lexeme.clone(), arg);
         }
-        match interpreter.execute_block(&self.body, call_env) {
+        match interpreter.execute_stmt_block(&self.body, call_env) {
             Ok(_) => Ok(Value::Nil),
             Err(Error::Return(val)) => Ok(val),
             Err(e) => Err(e),

@@ -56,12 +56,7 @@ impl Environment {
     }
     pub fn get_at(env: EnvRef, distance: usize, name: &str) -> Value {
         let ancestor = Environment::ancestor(env, distance);
-        ancestor
-            .borrow()
-            .map
-            .get(name)
-            .cloned()
-            .unwrap_or(Value::Nil)
+        ancestor.borrow().map.get(name).cloned().unwrap_or(Value::Nil)
     }
 
     pub fn assign_at(env: EnvRef, distance: usize, name: String, value: &Value) {
