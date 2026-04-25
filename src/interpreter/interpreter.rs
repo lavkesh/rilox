@@ -276,13 +276,29 @@ impl Interpreter {
                     }
                 }
             }
-            Expr::Get {object, name} => {
+            Expr::Get { object, name } => {
                 let ob = self.eval_expr(object);
                 if let Value::Instance(instance) = ob {
-                    return instance.borrow().get(name);
+                    instance.borrow().get(name)
+                } else {
+                    runtime_error(name.clone(), "Not a instance");
+                    Value::Nil
                 }
-                runtime_error(name.clone(), "Not a function");
-                Value::Nil
+            }
+            Expr::Set {
+                object,
+                name,
+                value,
+            } => {
+                let ob = self.eval_expr(object);
+                if let Value::Instance(instance) = ob {
+                    let val = self.eval_expr(value);
+                    instance.borrow_mut().set(name.lexeme.clone(), val.clone());
+                    val
+                } else {
+                    runtime_error(name.clone(), "Not a instance");
+                    Value::Nil
+                }
             }
         }
     }

@@ -190,6 +190,14 @@ impl Resolver {
             } => {
                 self.resolve_expr(object);
             }
+            Expr::Set {
+                object,
+                name: _name,
+                value,
+            } => {
+                self.resolve_expr(object);
+                self.resolve_expr(value);
+            }
         }
     }
 

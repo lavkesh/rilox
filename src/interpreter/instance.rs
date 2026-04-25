@@ -1,4 +1,4 @@
-use crate::error::{runtime_error};
+use crate::error::runtime_error;
 use crate::interpreter::class::LoxClass;
 use crate::interpreter::value::Value;
 use crate::lexer::token::Token;
@@ -20,5 +20,8 @@ impl LoxInstance {
             runtime_error(name.clone(), "Undefined property");
             Value::Nil
         }
+    }
+    pub fn set(&mut self, name: String, value: Value) {
+        self.fields.insert(name, value);
     }
 }

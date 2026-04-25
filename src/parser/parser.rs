@@ -68,14 +68,20 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, ParseError> {
-        let ex = self.or()?;
+        let ex = self.or()?; // left side
         if self.match_any(&[TokenType::Equal]) {
-            let equal = self.previous().clone(); // Clone token
-            let value = self.assignment()?; // Recursive call
-            // check if the left side is a variable
+            let equal = self.previous().clone();
+            let value = self.assignment()?; // right side
             if let Expr::Variable(var_token) = ex {
                 Ok(Expr::Assignment {
-                    name: var_token.clone(), // Clone var_token (owned)
+                    name: var_token.clone(),
+                    value: Box::new(value),
+                })
+            } else if let Expr::Get { object, name } = ex {
+                // if left side was Get, we change it to Set, the last property is getting reassigned.
+                Ok(Expr::Set {
+                    object,
+                    name,
                     value: Box::new(value),
                 })
             } else {
