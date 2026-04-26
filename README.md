@@ -29,7 +29,7 @@ A Rust implementation of the [Lox](https://craftinginterpreters.com/) programmin
 cargo run
 
 # Run a script
-cargo run -- path/to/script.lox
+cargo run --release path/to/script.lox
 ```
 
 ## Example
