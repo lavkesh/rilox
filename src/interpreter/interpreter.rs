@@ -5,6 +5,7 @@ use crate::interpreter::function::{LoxCallable, LoxFunction};
 use crate::interpreter::instance::LoxInstance;
 use crate::interpreter::value::{Value, is_equal, is_truthy};
 use crate::lexer::token::{Literal, TokenType};
+use crate::native::array::{ArrayFn, ArrayMethod};
 use crate::native::clock::ClockFn;
 use crate::native::convert::ToNumberFn;
 use crate::native::io::ReadLineFn;
@@ -295,7 +296,7 @@ impl Interpreter {
                 match callee_val {
                     Value::Callable(func) => {
                         let func = func.clone();
-                        if args.len() != func.arity() {
+                        if !func.is_variadic() && args.len() != func.arity() {
                             runtime_error(token.clone(), "Wrong number of arguments");
                             return Value::Nil;
                         }
@@ -318,6 +319,16 @@ impl Interpreter {
                 let ob = self.eval_expr(object);
                 if let Value::Instance(instance) = ob {
                     LoxInstance::get(&instance, name)
+                } else if let Value::Array(arr) = ob {
+                    if ["push", "pop", "len","get","set"].contains(&&*name.lexeme) {
+                        return Value::Callable(Rc::new(ArrayMethod {
+                            method_name: name.lexeme.to_string(),
+                            array: arr,
+                        }));
+                    } else {
+                        runtime_error(name.clone(), "not a function");
+                        Value::Nil
+                    }
                 } else {
                     runtime_error(name.clone(), "Not a instance");
                     Value::Nil
@@ -417,6 +428,10 @@ impl Interpreter {
         globals.define(
             "to_number".to_string(),
             Value::Callable(Rc::new(ToNumberFn)),
+        );
+        globals.define(
+            "array".to_string(),
+            Value::Callable(Rc::new(ArrayFn)), // Assuming ArrayFn has no state
         );
     }
 }
