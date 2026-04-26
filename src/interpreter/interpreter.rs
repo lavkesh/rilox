@@ -1,10 +1,13 @@
 use crate::error::{Error, runtime_error};
 use crate::interpreter::class::LoxClass;
 use crate::interpreter::env::{EnvRef, Environment};
-use crate::interpreter::function::{ClockFn, LoxCallable, LoxFunction};
+use crate::interpreter::function::{LoxCallable, LoxFunction};
 use crate::interpreter::instance::LoxInstance;
 use crate::interpreter::value::{Value, is_equal, is_truthy};
 use crate::lexer::token::{Literal, TokenType};
+use crate::native::clock::ClockFn;
+use crate::native::convert::ToNumberFn;
+use crate::native::io::ReadLineFn;
 use crate::parser::expr::Expr;
 use crate::parser::stmt::Statement;
 use std::cell::RefCell;
@@ -335,15 +338,27 @@ impl Interpreter {
     }
 
     pub fn new() -> Self {
-        let globals = Rc::new(RefCell::new(Environment::new(None)));
-        globals
-            .borrow_mut()
-            .define("clock".to_string(), Value::Callable(Rc::new(ClockFn)));
-        Self {
-            env: globals.clone(),
-            globals,
+        let mut instance;
+        let env = Rc::new(RefCell::new(Environment::new(None)));
+        instance = Self {
+            env: env.clone(),
+            globals: env,
             had_error: false,
             locals: HashMap::new(),
-        }
+        };
+        instance.define_global();
+        instance
+    }
+    fn define_global(&mut self) {
+        let mut globals = self.globals.borrow_mut();
+        globals.define("clock".to_string(), Value::Callable(Rc::new(ClockFn)));
+        globals.define(
+            "read_line".to_string(),
+            Value::Callable(Rc::new(ReadLineFn)),
+        );
+        globals.define(
+            "to_number".to_string(),
+            Value::Callable(Rc::new(ToNumberFn)),
+        );
     }
 }

@@ -12,6 +12,7 @@ pub struct LoxInstance {
     pub fields: HashMap<String, Value>,
 }
 impl LoxInstance {
+    // returns a variable or a function.
     pub fn get(instance_rc: &Rc<RefCell<Self>>, name: &Token) -> Value {
         let key = name.lexeme.as_str();
         if instance_rc.borrow().fields.contains_key(key) {

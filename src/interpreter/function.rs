@@ -14,28 +14,6 @@ pub trait LoxCallable: Debug {
     fn call(&self, interpreter: &mut Interpreter, args: Vec<Value>) -> Result<Value, Error>;
 }
 
-pub struct ClockFn;
-
-impl Debug for ClockFn {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "fn clock")
-    }
-}
-
-impl LoxCallable for ClockFn {
-    fn arity(&self) -> usize {
-        0
-    }
-
-    fn call(&self, _interpreter: &mut Interpreter, _args: Vec<Value>) -> Result<Value, Error> {
-        let time = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs_f64();
-        Ok(Value::Number(time))
-    }
-}
-
 #[derive(Clone)]
 pub struct LoxFunction {
     pub(crate) params: Vec<Token>,
@@ -56,7 +34,7 @@ impl LoxFunction {
         env.define("this".to_string(), Value::Instance(instance));
         let bound_function = LoxFunction {
             params: self.params.clone(),
-            body: Rc::clone(&self.body),
+            body: self.body.clone(),
             closure: Rc::new(RefCell::new(env)),
             function_type: self.function_type.clone(),
         };
@@ -73,14 +51,19 @@ impl LoxCallable for LoxFunction {
         for (param, arg) in self.params.iter().zip(args) {
             call_env.borrow_mut().define(param.lexeme.clone(), arg);
         }
+        // Init is a special function. it always returns the instance type attached to "this"
         match interpreter.execute_stmt_block(&self.body, call_env) {
             Ok(_) => {
                 if self.function_type == FunctionType::INIT {
+                    // "this" is always the first one to be stored.
+                    // look at bind.
                     return Ok(Environment::get_at(self.closure.clone(), 0, 0));
                 }
                 Ok(Value::Nil)
             }
             Err(Error::Return(val)) => {
+                // Kind of overriding that val. this shouldn't happen because
+                // resolver throws errors before running if init function has a return value
                 if self.function_type == FunctionType::INIT {
                     return Ok(Environment::get_at(self.closure.clone(), 0, 0));
                 }

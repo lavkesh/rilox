@@ -1,0 +1,17 @@
+class Rectangle {
+    init(a, b) {
+	this.width = a;
+	this.height = b;
+    }
+    area() {
+	return this.width * this.height;
+    }
+}
+
+print "Enter width";
+var width = to_number(read_line());
+print "Enter height";
+var height = to_number(read_line());
+
+var rect = Rectangle(width, height);
+print "Area = " + rect.area();

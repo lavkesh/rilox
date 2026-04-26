@@ -1,0 +1,10 @@
+print "What is your name?";
+var name = read_line();
+
+if (name != nil) {
+    print "Hello, " + name + "!";
+} else {
+    print "No input detected.";
+}
+
+

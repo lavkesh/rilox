@@ -396,11 +396,13 @@ impl Parser {
         let mut methods = Vec::new();
         while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
             let name = self.expect(&TokenType::Identifier)?.clone();
+            let function_type;
             if name.lexeme.to_lowercase() == "init" {
-                methods.push(self.function(name, FunctionType::INIT)?);
+                function_type = FunctionType::INIT;
             } else {
-                methods.push(self.function(name, FunctionType::METHOD)?);
+                function_type = FunctionType::METHOD;
             }
+            methods.push(self.function(name, function_type)?);
         }
         self.expect(&TokenType::RightBrace)?;
         Ok(Statement::ClassStmt(name, methods))
