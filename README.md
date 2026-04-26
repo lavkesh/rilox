@@ -96,7 +96,6 @@ Each package has its own README with design decisions:
 - [`src/parser/`](src/parser/README.md) — recursive descent parser, AST nodes
 - [`src/interpreter/`](src/interpreter/README.md) — resolver, environment, tree-walk evaluator, values, functions, classes
 - [`src/native/`](src/native/README.md) — built-in functions
-
 ## Exit Codes
 
 | Code | Meaning       |
