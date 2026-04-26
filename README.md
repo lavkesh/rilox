@@ -21,6 +21,7 @@ A Rust implementation of the [Lox](https://craftinginterpreters.com/) programmin
 - `clock()` — Unix timestamp in seconds
 - `read_line()` — read from stdin
 - `to_number()` — type conversion
+- `Array(...)` — variadic array constructor with methods: `.push(v)`, `.pop()`, `.get(i)`, `.set(i, v)`, `.len()`
 
 ## Usage
 
