@@ -19,11 +19,7 @@ impl LoxCallable for ArrayFn {
         0
     }
     fn call(&self, _interpreter: &mut Interpreter, args: Vec<Value>) -> Result<Value, Error> {
-        let mut array = vec![];
-        for arg in args {
-            array.push(arg)
-        }
-        Ok(Value::Array(Rc::new(RefCell::new(array))))
+        Ok(Value::Array(Rc::new(RefCell::new(args))))
     }
     fn is_variadic(&self) -> bool {
         true

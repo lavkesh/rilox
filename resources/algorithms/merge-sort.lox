@@ -67,14 +67,7 @@ fun sort(arr) {
 
 // --- Testing the Implementation ---
 
-var arr = array();
-arr.push(38);
-arr.push(27);
-arr.push(43);
-arr.push(10);
-arr.push(3);
-arr.push(9);
-arr.push(82);
+var arr = array(38,27,43,10,3,9,80);
 
 print "--- Before Sorting ---";
 for (var i = 0; i < arr.len(); i = i + 1) {
