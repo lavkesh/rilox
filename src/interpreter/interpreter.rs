@@ -4,7 +4,7 @@ use crate::interpreter::env::{EnvRef, Environment};
 use crate::interpreter::function::{LoxCallable, LoxFunction};
 use crate::interpreter::instance::LoxInstance;
 use crate::interpreter::value::{Value, is_equal, is_truthy};
-use crate::lexer::token::{Literal, TokenType};
+use crate::lexer::token::{Literal, Token, TokenType};
 use crate::native::array::{ArrayFn, ArrayMethod};
 use crate::native::clock::ClockFn;
 use crate::native::convert::ToNumberFn;
@@ -290,17 +290,7 @@ impl Interpreter {
                 callee,
                 args,
             } => {
-                let callee_token = match &**callee {
-                    Expr::Variable(name_token) => {
-                        Some(name_token)
-                    }
-                    Expr::Get { object: _, name: method_token } => {
-                        Some(method_token)
-                    }
-                    _ => {
-                     None
-                    }
-                }.unwrap();
+                let callee_token = extract_callee_token(callee).unwrap();
                 let callee_val = self.eval_expr(callee);
                 let args: Vec<Value> = args.iter().map(|arg| self.eval_expr(arg)).collect();
 
@@ -449,5 +439,16 @@ impl Interpreter {
         );
         globals.define("array".to_string(), Value::Callable(Rc::new(ArrayFn)));
         globals.define("floor".to_string(), Value::Callable(Rc::new(MathFloorFn)))
+    }
+}
+
+fn extract_callee_token(expr: &Expr) -> Option<Token> {
+    match expr {
+        Expr::Variable(name_token) => Some(name_token.clone()),
+        Expr::Get { name: method_token, .. } => Some(method_token.clone()),
+        Expr::Super { method: method_token, .. } => Some(method_token.clone()),
+        Expr::Call { callee, .. } => extract_callee_token(callee),
+        Expr::Grouping { expr } => extract_callee_token(expr),
+        _ => None,
     }
 }
